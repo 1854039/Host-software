@@ -4,19 +4,31 @@
 
 
 ├─src
+
 │  ├─main
+
 │  │  ├─java
+
 │  │  │  └─com
+
 │  │  │      └─example
+
 │  │  │          └─zosdemo
+
 │  │  │              ├─Controller
+
 │  │  │              ├─domain
+
 │  │  │              └─Util
+
 │  │  └─resources
 
-controller ———— functions implements
-domain ———— data domain
-Util ———— tools class for http connection
+
+controller —— functions implements
+
+domain —— data domain
+
+Util —— tools class for http connection
 
 
 
