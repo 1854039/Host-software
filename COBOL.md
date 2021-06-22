@@ -62,20 +62,6 @@ You can read the HELP.md to learn how to start our program.
 
 
 
-#### 
-
-
-
-
-
-
-
-
-
-3.2 
-
-
-
 
 
 
