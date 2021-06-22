@@ -1,0 +1,4 @@
+com\example\zosdemo\domain\DatasetInfo.class
+com\example\zosdemo\domain\JobInfo.class
+com\example\zosdemo\domain\JCLInfo.class
+com\example\zosdemo\domain\JobStatus.class

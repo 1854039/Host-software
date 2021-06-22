@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -24,299 +25,398 @@ import java.util.Map;
 public class DataController {
         //获取数据集列表
         @RequestMapping(value = "/sms/getdslist", method = RequestMethod.GET)
-        public ResponseEntity<String> getSDSList(@RequestParam String dsName, HttpSession session) {
-                //获取session
-                Object ZOSMF_Address = session.getAttribute("ZOSMF_Address");
-                Object ZOSMF_Account = session.getAttribute("ZOSMF_Account");
-                Object ZOSMF_JSESSIONID = session.getAttribute("ZOSMF_JSESSIONID");
-                Object ZOSMF_LtpaToken2 = session.getAttribute("ZOSMF_LtpaToken2");
-                if (ZOSMF_JSESSIONID == null || ZOSMF_LtpaToken2 == null || ZOSMF_Address == null || ZOSMF_Account == null) {
-                        return ResponseEntity.status(401).body("unauthorized");
-                } else {
-                        String url = "https://" + ZOSMF_Address.toString() + "/zosmf/restfiles/ds?dslevel="+dsName;
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.TEXT_PLAIN);
-                        headers.add("Cookie", ZOSMF_JSESSIONID.toString() + ";" + ZOSMF_LtpaToken2);
-                        CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
-                        HttpComponentsClientHttpRequestFactory requestFactory
-                                = new HttpComponentsClientHttpRequestFactory();
-                        requestFactory.setHttpClient(httpClient);
+        public ResponseEntity<String> getSDSList(@RequestParam String dsName, HttpServletRequest request) {
+                String authorization = request.getHeader("Authorization").toString();
 
-                        HttpEntity<String> requestList = new HttpEntity<>(headers);
+                if(!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if(!jsessionid.isEmpty()&&!token.isEmpty()&&!address.isEmpty()) {
+                                String url = "https://" + address + "/zosmf/restfiles/ds?dslevel="+dsName;
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.TEXT_PLAIN);
+                                headers.add("Cookie", jsessionid + ";" + token);
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory
+                                        = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
 
-                        ResponseEntity<String> responseList = new RestTemplate(requestFactory).exchange(url, HttpMethod.GET, requestList, String.class);
-                        return ResponseEntity.ok(responseList.getBody());
+                                HttpEntity<String> requestList = new HttpEntity<>(headers);
+
+                                ResponseEntity<String> responseList = new RestTemplate(requestFactory).exchange(url, HttpMethod.GET, requestList, String.class);
+                                return ResponseEntity.ok(responseList.getBody());
+                        }
+                        else {
+                                return ResponseEntity.status(401).body("unauthorized");
+                        }
                 }
+                else {
+                      return ResponseEntity.status(401).body("缺少必要的session或token");
+                }
+
         }
 
         //获取分区数据集成员
         @RequestMapping(value = "/sms/getpdsmemberlist", method = RequestMethod.GET)
-        public ResponseEntity<String> getPDSMember(@RequestParam String dsName, HttpSession session) {
-                //获取session
-                Object ZOSMF_Address = session.getAttribute("ZOSMF_Address");
-                Object ZOSMF_Account = session.getAttribute("ZOSMF_Account");
-                Object ZOSMF_JSESSIONID = session.getAttribute("ZOSMF_JSESSIONID");
-                Object ZOSMF_LtpaToken2 = session.getAttribute("ZOSMF_LtpaToken2");
-//        String dsName="ST010.SEQDS";
-                if (ZOSMF_JSESSIONID == null || ZOSMF_LtpaToken2 == null || ZOSMF_Address == null || ZOSMF_Account == null) {
-                        return ResponseEntity.status(401).body("unauthorized");
-                } else {
-                        String url = "https://" + ZOSMF_Address.toString() + "/zosmf/restfiles/ds/"+dsName+"/member";
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.TEXT_PLAIN);
-                        headers.add("Cookie", ZOSMF_JSESSIONID.toString() + ";" + ZOSMF_LtpaToken2);
-                        CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
-                        HttpComponentsClientHttpRequestFactory requestFactory
-                                = new HttpComponentsClientHttpRequestFactory();
-                        requestFactory.setHttpClient(httpClient);
+        public ResponseEntity<String> getPDSMember(@RequestParam String dsName, HttpServletRequest request) {
+                String authorization = request.getHeader("Authorization").toString();
 
-                        HttpEntity<String> requestList = new HttpEntity<>(headers);
+                if(!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if(!jsessionid.isEmpty()&&!token.isEmpty()&&!address.isEmpty()) {
+                                String url = "https://" + address + "/zosmf/restfiles/ds/"+dsName+"/member";
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.TEXT_PLAIN);
+                                headers.add("Cookie", jsessionid + ";" + token);
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory
+                                        = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
 
-                        ResponseEntity<String> responseList = new RestTemplate(requestFactory).exchange(url, HttpMethod.GET, requestList, String.class);
-                        return ResponseEntity.ok(responseList.getBody());
+                                HttpEntity<String> requestList = new HttpEntity<>(headers);
+
+                                ResponseEntity<String> responseList = new RestTemplate(requestFactory).exchange(url, HttpMethod.GET, requestList, String.class);
+                                return ResponseEntity.ok(responseList.getBody());
+                        }
+                        else {
+                                return ResponseEntity.status(401).body("unauthorized");
+                        }
                 }
+                else {
+                        return ResponseEntity.status(401).body("缺少session或token");
+                }
+
         }
 
         //删除数据集
         @RequestMapping(value = "/sms/deleteds", method = RequestMethod.DELETE)
-        public ResponseEntity<String> deleteSDS(@RequestParam String dsName, HttpSession session) {
+        public ResponseEntity<String> deleteSDS(@RequestParam String dsName, HttpServletRequest request) {
                 //获取session
-                Object ZOSMF_Address = session.getAttribute("ZOSMF_Address");
-                Object ZOSMF_Account = session.getAttribute("ZOSMF_Account");
-                Object ZOSMF_JSESSIONID = session.getAttribute("ZOSMF_JSESSIONID");
-                Object ZOSMF_LtpaToken2 = session.getAttribute("ZOSMF_LtpaToken2");
-//        String dsName="ST010.SEQDS";
-                if (ZOSMF_JSESSIONID == null || ZOSMF_LtpaToken2 == null || ZOSMF_Address == null || ZOSMF_Account == null) {
-                        return ResponseEntity.status(401).body("unauthorized");
-                } else {
-                        String url = "https://" + ZOSMF_Address.toString() + "/zosmf/restfiles/ds/"+dsName;
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.TEXT_PLAIN);
-                        headers.add("Cookie", ZOSMF_JSESSIONID.toString() + ";" + ZOSMF_LtpaToken2);
-                        CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
-                        HttpComponentsClientHttpRequestFactory requestFactory
-                                = new HttpComponentsClientHttpRequestFactory();
-                        requestFactory.setHttpClient(httpClient);
+                String authorization = request.getHeader("Authorization");
+                if(!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if(!jsessionid.isEmpty()&&!token.isEmpty()&&!address.isEmpty()) {
+                                String url = "https://" + address + "/zosmf/restfiles/ds/"+dsName;
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.TEXT_PLAIN);
+                                headers.add("Cookie", jsessionid + ";" + token);
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory
+                                        = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
 
-                        HttpEntity<String> requestList = new HttpEntity<>(headers);
+                                HttpEntity<String> requestList = new HttpEntity<>(headers);
 
-                        ResponseEntity<String> responseList = new RestTemplate(requestFactory).exchange(url, HttpMethod.DELETE, requestList, String.class);
-                        return ResponseEntity.ok(responseList.getBody());
+                                ResponseEntity<String> responseList = new RestTemplate(requestFactory).exchange(url, HttpMethod.DELETE, requestList, String.class);
+                                return ResponseEntity.ok(responseList.getBody());
+                        }
+                        else {
+                                return ResponseEntity.status(401).body("unauthorized");
+
+                        }
+                }
+                else {
+                        return ResponseEntity.status(401).body("缺少session或token");
+
                 }
         }
 
 
         //删除分区数据集成员
         @RequestMapping(value = "/sms/deletepdsmember", method = RequestMethod.DELETE)
-        public ResponseEntity<String> deletePDSMenber(@RequestParam String dsName, HttpSession session) {
-                //获取session
-                Object ZOSMF_Address = session.getAttribute("ZOSMF_Address");
-                Object ZOSMF_Account = session.getAttribute("ZOSMF_Account");
-                Object ZOSMF_JSESSIONID = session.getAttribute("ZOSMF_JSESSIONID");
-                Object ZOSMF_LtpaToken2 = session.getAttribute("ZOSMF_LtpaToken2");
-//        String dsName=null;
-                if (ZOSMF_JSESSIONID == null || ZOSMF_LtpaToken2 == null || ZOSMF_Address == null || ZOSMF_Account == null) {
-                        return ResponseEntity.status(401).body("unauthorized");
-                } else {
-                        String url = "https://" + ZOSMF_Address.toString() + "/zosmf/restfiles/ds/"+dsName;
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.TEXT_PLAIN);
-                        headers.add("Cookie", ZOSMF_JSESSIONID.toString() + ";" + ZOSMF_LtpaToken2);
-                        CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
-                        HttpComponentsClientHttpRequestFactory requestFactory
-                                = new HttpComponentsClientHttpRequestFactory();
-                        requestFactory.setHttpClient(httpClient);
+        public ResponseEntity<String> deletePDSMenber(@RequestParam String dsName, HttpServletRequest request) {
+                String authorization = request.getHeader("Authorization");
+                if(!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if(!jsessionid.isEmpty()&&!token.isEmpty()&&!address.isEmpty()) {
+                                String url = "https://" + address + "/zosmf/restfiles/ds/"+dsName;
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.TEXT_PLAIN);
+                                headers.add("Cookie", jsessionid + ";" + token);
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory
+                                        = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
 
-                        HttpEntity<String> requestList = new HttpEntity<>(headers);
+                                HttpEntity<String> requestList = new HttpEntity<>(headers);
 
-                        ResponseEntity<String> responseList = new RestTemplate(requestFactory).exchange(url, HttpMethod.DELETE, requestList, String.class);
-                        return ResponseEntity.ok(responseList.getBody());
+                                ResponseEntity<String> responseList = new RestTemplate(requestFactory).exchange(url, HttpMethod.DELETE, requestList, String.class);
+                                return ResponseEntity.ok(responseList.getBody());
+                        }
+                        else {
+                                return ResponseEntity.status(401).body("unauthorized");
+
+                        }
+                }
+                else {
+                        return ResponseEntity.status(401).body("缺少session或token");
+
                 }
         }
 
         //获取数据集内容
         @RequestMapping(value = "/sms/getds", method = RequestMethod.GET)
-        public ResponseEntity<String> getDataset(@RequestParam String dsName, HttpSession session) {
+        public ResponseEntity<String> getDataset(@RequestParam String dsName, HttpServletRequest request) {
                 //获取session
-                Object ZOSMF_Address = session.getAttribute("ZOSMF_Address");
-                Object ZOSMF_Account = session.getAttribute("ZOSMF_Account");
-                Object ZOSMF_JSESSIONID = session.getAttribute("ZOSMF_JSESSIONID");
-                Object ZOSMF_LtpaToken2 = session.getAttribute("ZOSMF_LtpaToken2");
-//        String dsName=null;
-                if (ZOSMF_JSESSIONID == null || ZOSMF_LtpaToken2 == null || ZOSMF_Address == null || ZOSMF_Account == null) {
-                        return ResponseEntity.status(401).body("unauthorized");
-                } else {
-                        String url = "https://" + ZOSMF_Address.toString() + "/zosmf/restfiles/ds/"+dsName;
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.TEXT_PLAIN);
-                        headers.add("Cookie", ZOSMF_JSESSIONID.toString() + ";" + ZOSMF_LtpaToken2);
-                        CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
-                        HttpComponentsClientHttpRequestFactory requestFactory
-                                = new HttpComponentsClientHttpRequestFactory();
-                        requestFactory.setHttpClient(httpClient);
+                String authorization = request.getHeader("Authorization");
+                if(!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if(!jsessionid.isEmpty()&&!token.isEmpty()&&!address.isEmpty()) {
+                                String url = "https://" + address + "/zosmf/restfiles/ds/"+dsName;
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.TEXT_PLAIN);
+                                headers.add("Cookie", jsessionid + ";" + token);
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory
+                                        = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
 
-                        HttpEntity<String> requestCont = new HttpEntity<>(headers);
+                                HttpEntity<String> requestCont = new HttpEntity<>(headers);
 
-                        ResponseEntity<String> responseCont = new RestTemplate(requestFactory).exchange(url, HttpMethod.GET, requestCont, String.class);
-                        return ResponseEntity.ok(responseCont.getBody());
+                                ResponseEntity<String> responseCont = new RestTemplate(requestFactory).exchange(url, HttpMethod.GET, requestCont, String.class);
+                                return ResponseEntity.ok(responseCont.getBody());
+                        }
+                        else {
+                                return ResponseEntity.status(401).body("unauthorized");
+
+                        }
+                }
+                else {
+                        return ResponseEntity.status(401).body("缺少session或token");
+
                 }
         }
 
+        @RequestMapping(value="/sms/job/outputlist",method = RequestMethod.GET)
+        public ResponseEntity<String> qurejoboutputlist(@RequestParam("jobName") String jobName,
+                                              @RequestParam("jobId") String jobId,HttpServletRequest request) {
+                String authorization = request.getHeader("Authorization");
+                if(!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if (!jsessionid.isEmpty() && !token.isEmpty() && !address.isEmpty()) {
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.TEXT_PLAIN);
+                                headers.add("Cookie", jsessionid + ";" + token);
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory
+                                        = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
+                                String url="https://10.60.43.8:8800/zosmf/restjobs/jobs/"+jobName+"/"+jobId;
+                                //查询结果的request
+
+                                HttpEntity<String> requestQur = new HttpEntity<>(headers);
+
+                                ResponseEntity<String> responseQur = new RestTemplate(requestFactory).exchange(url,HttpMethod.GET,requestQur,String.class);
+                                System.out.println(responseQur.getBody().getBytes(StandardCharsets.UTF_8));
+                                System.out.println(responseQur);
+
+                                return responseQur;
+                        }
+                        else {
+                                return ResponseEntity.status(401).body("unauthorized");
+
+                        }
+                }
+                else {
+                        return ResponseEntity.status(401).body("缺少session或token");
+
+                }
+        }
+
+        @RequestMapping(value="/sms/job/output",method = RequestMethod.GET)
+        public ResponseEntity<String> qurejoboutput(@RequestParam("jobName") String jobName,
+                                                    @RequestParam("jobId") String jobId,
+                                                        @RequestParam("id") String id,
+                                                    HttpServletRequest request) {
+                String authorization = request.getHeader("Authorization");
+                if(!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if (!jsessionid.isEmpty() && !token.isEmpty() && !address.isEmpty()) {
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.TEXT_PLAIN);
+                                headers.add("Cookie", jsessionid + ";" + token);
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory
+                                        = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
+                                String url="https://10.60.43.8:8800/zosmf/restjobs/jobs/"+jobName+"/"+jobId+"/";
+                                url+="files/"+id+"/records";
+                                //查询结果的request
+
+                                HttpEntity<String> requestQur = new HttpEntity<>(headers);
+                                ResponseEntity<String> result = new RestTemplate(requestFactory).exchange(url,HttpMethod.GET,requestQur,String.class);
+                                return ResponseEntity.ok(result.getBody());
+                        }
+                        else {
+                                return ResponseEntity.status(401).body("unauthorized");
+
+                        }
+                }
+                else {
+                        return ResponseEntity.status(401).body("缺少session或token");
+
+                }
+        }
 
         //提交作业
         @RequestMapping(value = "/sms/subjob",method = RequestMethod.PUT)
-        public ResponseEntity<String> subJob(@RequestBody Map<String, List<String>> map, HttpSession session){
-                Object ZOSMF_Address = session.getAttribute("ZOSMF_Address");
-                Object ZOSMF_Account = session.getAttribute("ZOSMF_Account");
-                Object ZOSMF_JSESSIONID = session.getAttribute("ZOSMF_JSESSIONID");
-                Object ZOSMF_LtpaToken2 = session.getAttribute("ZOSMF_LtpaToken2");
-                if(ZOSMF_JSESSIONID==null || ZOSMF_LtpaToken2 == null){
-                        //没有token信息，授权失败
-                        return ResponseEntity.status(401).body("unauthorized");
-                }else {
-                        CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
-                        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-                        requestFactory.setHttpClient(httpClient);
-                        //url
-                        String url ="https://" + ZOSMF_Address.toString() + "/zosmf/restjobs/jobs";
-                        //hearders
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.TEXT_PLAIN);
-                        headers.add("Cookie",ZOSMF_JSESSIONID.toString()+";"+ZOSMF_LtpaToken2);
-                        //body
-                        StringBuffer sb = new StringBuffer();
-                        List<String> lists = map.get("jclList");
-                        for(String item :lists){
-                                sb.append(item+"\n");
-                        }
-                        //提交jcl的request
-                        HttpEntity<String> requestSub = new HttpEntity<>(sb.toString(), headers);
-                        //响应内容
-                        ResponseEntity<JobInfo> responseSub = new RestTemplate(requestFactory).exchange(url, HttpMethod.PUT,requestSub,JobInfo.class);
+        public ResponseEntity<JobInfo> subJob(@RequestBody Map<String,String> map, HttpServletRequest request) {
+                String authorization = request.getHeader("Authorization");
+                if (!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if (!jsessionid.isEmpty() && !token.isEmpty() && !address.isEmpty()) {
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
+                                //url
+                                String url = "https://" + address + "/zosmf/restjobs/jobs";
+                                //hearders
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.TEXT_PLAIN);
+                                headers.add("Cookie", jsessionid + ";" + token);
+                                //body
 
-                        //query job's status
-                        for(int i = 0; i<20;i++){
-                                try {
-                                        Thread.currentThread().sleep(100);//毫秒
-                                }catch (Exception e){
-                                        System.out.println(e.getMessage());
-                                }
-                                //查询执行状态的地址
-                                url="https://10.60.43.8:8800/zosmf/restjobs/jobs/"+responseSub.getBody().getJobname()+"/"+responseSub.getBody().getJobid();
-                                //查询结果的request
-                                HttpEntity<String> requestQur = new HttpEntity<>(headers);
-                                ResponseEntity<JobInfo> responseQur = new RestTemplate(requestFactory).exchange(url,HttpMethod.GET,requestQur,JobInfo.class);
-                                //判断作业状态
-                                if(responseQur.getBody().getStatus().equals("OUTPUT")){
-                                        //查询执行结果的地址
-                                        url=url+"/files/102/records";
-                                        ResponseEntity<String> result = new RestTemplate(requestFactory).exchange(url,HttpMethod.GET,requestQur,String.class);
-                                        return ResponseEntity.ok(result.getBody());
-                                }
+                                String content = map.get("jclList").toString();
+                                HttpEntity<String> requestSub = new HttpEntity<>(content, headers);
+                                //响应内容
+                                ResponseEntity<JobInfo> responseSub = new RestTemplate(requestFactory).exchange(url, HttpMethod.PUT, requestSub, JobInfo.class);
+                                return responseSub;
                         }
-                        //超时
-                        return ResponseEntity.status(202).body("time out");
+                        else {
+                                return null;
+
+                        }
+                }
+                else {
+                        return null;
+
                 }
         }
-
 
         //将code写入到数据集中
         @RequestMapping(value = "/sms/writeds",method = RequestMethod.PUT)
         //para jcl-content + dataset-name
-        public ResponseEntity<String> writeDS(@RequestBody Map<String,Object> map, HttpSession session){
+        public ResponseEntity<String> writeDS(@RequestBody Map<String,Object> map, HttpServletRequest request){
                 //获取session数据
-                Object ZOSMF_Address = session.getAttribute("ZOSMF_Address");
-                Object ZOSMF_Account = session.getAttribute("ZOSMF_Account");
-                Object ZOSMF_JSESSIONID = session.getAttribute("ZOSMF_JSESSIONID");
-                Object ZOSMF_LtpaToken2 = session.getAttribute("ZOSMF_LtpaToken2");
-                if(ZOSMF_JSESSIONID==null || ZOSMF_LtpaToken2 == null){
-                        //没有token信息，授权失败
-                        return ResponseEntity.status(401).body("unauthorized");
-                }else{
-                        CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
-                        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-                        requestFactory.setHttpClient(httpClient);
-                        //url
-                        String url = "https://" + ZOSMF_Address.toString() + "/zosmf/restfiles/ds/"+map.get("dsName");
-                        //headers
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.TEXT_PLAIN);
-                        headers.add("Cookie",ZOSMF_JSESSIONID.toString()+";"+ZOSMF_LtpaToken2);
-                        //body
-                        StringBuffer sb = new StringBuffer();
-                        Collection<Object> jclList = (Collection<Object>) map.get("jclList");
-                        System.out.println(jclList);
-                        for(Object item:jclList){
-                                sb.append(item+"\n");
+                String authorization = request.getHeader("Authorization");
+                if(!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if(!jsessionid.isEmpty()&&!token.isEmpty()&&!address.isEmpty()) {
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
+                                //url
+                                String url = "https://" + address + "/zosmf/restfiles/ds/"+map.get("dsName");
+                                //headers
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.TEXT_PLAIN);
+                                headers.add("Cookie",jsessionid+";"+token);
+                                //body
+                                StringBuffer sb = new StringBuffer();
+                                Collection<Object> jclList = (Collection<Object>) map.get("jclList");
+                                System.out.println(jclList);
+                                for(Object item:jclList){
+                                        sb.append(item+"\n");
+                                }
+                                String jclStr = sb.toString();
+                                //start request
+                                HttpEntity<String> requestWrite = new HttpEntity<>(jclStr, headers);
+                                //get response
+                                ResponseEntity<String> responseWritte = new RestTemplate(requestFactory).exchange(url,HttpMethod.PUT,requestWrite,String.class);
+                                return ResponseEntity.ok(responseWritte.getBody());
                         }
-                        String jclStr = sb.toString();
-                        //start request
-                        HttpEntity<String> requestWrite = new HttpEntity<>(jclStr, headers);
-                        //get response
-                        ResponseEntity<String> responseWritte = new RestTemplate(requestFactory).exchange(url,HttpMethod.PUT,requestWrite,String.class);
-                        return ResponseEntity.ok(responseWritte.getBody());
+                        else {
+                                return ResponseEntity.status(401).body("unauthorized");
+
+                        }
+                }
+                else {
+                        return ResponseEntity.status(401).body("缺少session或token");
+
                 }
         }
 
 
+
         //创建数据集
         @RequestMapping(value="/sms/createds",method = RequestMethod.POST)
-        public ResponseEntity<String> createDS(@RequestBody DatasetInfo ds, HttpSession session){
+        public ResponseEntity<String> createDS(@RequestBody DatasetInfo ds, HttpServletRequest request){
                 //获取session数据
-                Object ZOSMF_Address = session.getAttribute("ZOSMF_Address");
-                Object ZOSMF_Account = session.getAttribute("ZOSMF_Account");
-                Object ZOSMF_JSESSIONID = session.getAttribute("ZOSMF_JSESSIONID");
-                Object ZOSMF_LtpaToken2 = session.getAttribute("ZOSMF_LtpaToken2");
-                if(ZOSMF_JSESSIONID==null || ZOSMF_LtpaToken2 == null){
-                        return ResponseEntity.status(401).body("unauthorized");
+                String authorization = request.getHeader("Authorization");
+                if(!authorization.isEmpty()) {
+                        String jsessionid = authorization.split(";")[0];
+                        String token = authorization.split(";")[1];
+                        String address = authorization.split(";")[2];
+                        if(!jsessionid.isEmpty()&&!token.isEmpty()&&!address.isEmpty()) {
+                                CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
+                                HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+                                requestFactory.setHttpClient(httpClient);
+                                //接收前端数据
+        //            String url = "https://" + ZOSMF_Address.toString() + "/zosmf/restfiles/ds/ST007.AAAAE.TEST";
+                                String url = "https://" + address + "/zosmf/restfiles/ds/"+ds.getDsname();
+                                System.out.println(ds.getDsname());
+                                //headers
+                                HttpHeaders headers = new HttpHeaders();
+                                headers.setContentType(MediaType.APPLICATION_JSON);
+                                headers.add("Cookie",jsessionid+";"+token);
+                                //body
+                                JSONObject object = new JSONObject();
+                                object.put("volser",ds.getVolser());
+                                object.put("unit", ds.getUnit());
+                                object.put("dsorg", ds.getDsorg());
+                                object.put("alcunit",ds.getAlcunit());
+                                object.put("primary", ds.getPrimary());
+                                object.put("secondary", ds.getSecondary());
+                                object.put("dirblk", ds.getDirblk());
+                                object.put("avgblk", ds.getAvgblk());
+                                object.put("recfm", ds.getRecfm());
+                                object.put("blksize", ds.getBlksize());
+                                object.put("lrecl", ds.getLrecl());
+        //            object.put("volser","BYWK00");
+        //            object.put("unit","3390");
+        //            object.put("dsorg", "PO");
+        //            object.put("alcunit","TRK");
+        //            object.put("primary", 10);
+        //            object.put("secondary",10);
+        //            object.put("dirblk", 5);
+        //            object.put("avgblk", 500);
+        //            object.put("recfm","FB");
+        //            object.put("blksize", 400);
+        //            object.put("lrecl", 80);
+
+
+                                //start request
+                                HttpEntity<JSONObject> requestcrt = new HttpEntity<>(object, headers);
+                                //get response
+                                ResponseEntity<String > responseCrt = new RestTemplate(requestFactory).postForEntity(url, requestcrt, String.class);
+
+                                return ResponseEntity.ok(responseCrt.getBody());
+                        }
+                        else {
+                                return ResponseEntity.status(401).body("unauthorized");
+
+                        }
                 }
-                else{
-                        CloseableHttpClient httpClient = SslUtil.SslHttpClientBuild();
-                        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-                        requestFactory.setHttpClient(httpClient);
-                        //接收前端数据
-//            String url = "https://" + ZOSMF_Address.toString() + "/zosmf/restfiles/ds/ST007.AAAAE.TEST";
-                        String url = "https://" + ZOSMF_Address.toString() + "/zosmf/restfiles/ds/"+ds.getDsname();
-                        System.out.println(ds.getDsname());
-                        //headers
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.APPLICATION_JSON);
-                        headers.add("Cookie",ZOSMF_JSESSIONID.toString()+";"+ZOSMF_LtpaToken2);
-                        //body
-                        JSONObject object = new JSONObject();
-                        object.put("volser",ds.getVolser());
-                        object.put("unit", ds.getUnit());
-                        object.put("dsorg", ds.getDsorg());
-                        object.put("alcunit",ds.getAlcunit());
-                        object.put("primary", ds.getPrimary());
-                        object.put("secondary", ds.getSecondary());
-                        object.put("dirblk", ds.getDirblk());
-                        object.put("avgblk", ds.getAvgblk());
-                        object.put("recfm", ds.getRecfm());
-                        object.put("blksize", ds.getBlksize());
-                        object.put("lrecl", ds.getLrecl());
-//            object.put("volser","BYWK00");
-//            object.put("unit","3390");
-//            object.put("dsorg", "PO");
-//            object.put("alcunit","TRK");
-//            object.put("primary", 10);
-//            object.put("secondary",10);
-//            object.put("dirblk", 5);
-//            object.put("avgblk", 500);
-//            object.put("recfm","FB");
-//            object.put("blksize", 400);
-//            object.put("lrecl", 80);
-
-                        System.out.println(object.toJSONString());
-
-                        //start request
-                        HttpEntity<JSONObject> requestcrt = new HttpEntity<>(object, headers);
-                        //get response
-                        ResponseEntity<String > responseCrt = new RestTemplate(requestFactory).postForEntity(url, requestcrt, String.class);
-
-                        return ResponseEntity.ok(responseCrt.getBody());
+                else {
+                        return ResponseEntity.status(401).body("缺少session或token");
 
                 }
-
         }
 }
