@@ -311,7 +311,7 @@ public class DataController {
         //将code写入到数据集中
         @RequestMapping(value = "/sms/writeds",method = RequestMethod.PUT)
         //para jcl-content + dataset-name
-        public ResponseEntity<String> writeDS(@RequestBody Map<String,Object> map, HttpServletRequest request){
+        public ResponseEntity<String> writeDS(@RequestBody Map<String,String> map, HttpServletRequest request){
                 //获取session数据
                 String authorization = request.getHeader("Authorization");
                 if(!authorization.isEmpty()) {
@@ -329,13 +329,7 @@ public class DataController {
                                 headers.setContentType(MediaType.TEXT_PLAIN);
                                 headers.add("Cookie",jsessionid+";"+token);
                                 //body
-                                StringBuffer sb = new StringBuffer();
-                                Collection<Object> jclList = (Collection<Object>) map.get("jclList");
-                                System.out.println(jclList);
-                                for(Object item:jclList){
-                                        sb.append(item+"\n");
-                                }
-                                String jclStr = sb.toString();
+                                String jclStr = map.get("jclList");
                                 //start request
                                 HttpEntity<String> requestWrite = new HttpEntity<>(jclStr, headers);
                                 //get response
